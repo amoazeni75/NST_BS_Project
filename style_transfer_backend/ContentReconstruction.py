@@ -1,7 +1,6 @@
 from __future__ import print_function, division
 
-from Tools import scale_img, LBFGS_Optimizer, convert_image_to_array_vgg, VGG19_AvgPool
-
+from style_transfer_backend import Tools
 from keras.models import Model
 import keras.backend as K
 import numpy as np
@@ -30,7 +29,7 @@ def reconstruct_content_image(img, conv_layer, file_name, plot_name):
     in VGG19 architecture
     """
     # convert image to array and preprocess for vgg
-    x = convert_image_to_array_vgg(img)
+    x = Tools.convert_image_to_array_vgg(img)
 
     # we'll use this throughout the rest of the script
     batch_shape = x.shape
@@ -42,7 +41,7 @@ def reconstruct_content_image(img, conv_layer, file_name, plot_name):
 
     # make a content model
     # try different cutoffs to see the images that result
-    vgg = VGG19_AvgPool(shape)
+    vgg = Tools.VGG19_AvgPool(shape)
     content_features, content_model_extractor = get_content_image_features(x, conv_layer, vgg)
 
     # define our loss in keras
@@ -73,7 +72,7 @@ def reconstruct_content_image(img, conv_layer, file_name, plot_name):
         l, g = get_loss_and_grads([x_vec.reshape(*batch_shape)])
         return l.astype(np.float64), g.flatten().astype(np.float64)
 
-    final_image, losses = LBFGS_Optimizer(get_loss_and_grads_wrapper, 10, batch_shape)
+    final_image, losses = Tools.LBFGS_Optimizer(get_loss_and_grads_wrapper, 10, batch_shape)
 
     # plot loss
     plt.plot(losses)
@@ -81,7 +80,7 @@ def reconstruct_content_image(img, conv_layer, file_name, plot_name):
     plt.show()
 
     # save image
-    final_image = scale_img(final_image)
+    final_image = Tools.scale_img(final_image)
     plt.imshow(final_image)
     plt.imsave(file_name, final_image)
     plt.show()

@@ -6,7 +6,7 @@ from __future__ import print_function, division
 # It should capture only the essence of the style.
 
 from keras.models import Model
-from Tools import scale_img, LBFGS_Optimizer, convert_image_to_array_vgg, VGG19_AvgPool
+from style_transfer_backend import Tools
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -60,13 +60,13 @@ def get_style_image_features(style_image, number_of_participated_block, vgg_mode
 
 def reconstruct_style_image(img, conv_layer, file_name, plot_name):
     # convert image to array and preprocess for vgg
-    x = convert_image_to_array_vgg(img)
+    x = Tools.convert_image_to_array_vgg(img)
 
     # we'll use this throughout the rest of the script
     batch_shape = x.shape
     shape = x.shape[1:]
 
-    vgg = VGG19_AvgPool(shape)
+    vgg = Tools.VGG19_AvgPool(shape)
     style_layers_features_outputs, symbolic_conv_outputs, style_features_extractor_model = get_style_image_features(x,
                                                                                                                     conv_layer,
                                                                                                                     vgg)
@@ -92,7 +92,7 @@ def reconstruct_style_image(img, conv_layer, file_name, plot_name):
         l, g = get_loss_and_grads([x_vec.reshape(*batch_shape)])
         return l.astype(np.float64), g.flatten().astype(np.float64)
 
-    final_image, losses = LBFGS_Optimizer(get_loss_and_grads_wrapper, 10, batch_shape)
+    final_image, losses = Tools.LBFGS_Optimizer(get_loss_and_grads_wrapper, 10, batch_shape)
 
     # plot loss
     plt.plot(losses)
@@ -100,7 +100,7 @@ def reconstruct_style_image(img, conv_layer, file_name, plot_name):
     plt.show()
 
     # save image
-    final_image = scale_img(final_image)
+    final_image = Tools.scale_img(final_image)
     plt.imshow(final_image)
     plt.imsave(file_name, final_image)
     plt.show()

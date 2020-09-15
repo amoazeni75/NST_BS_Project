@@ -186,7 +186,7 @@ def do_style_transfer(content_image, style_image):
 def style_transfer(c_image=None, s_image=None):
     if Config.show_log:
         # 1: create output directory to save the result
-        directory = './Outputs/StyleTransfer_V2_Results'
+        directory = '../media/results/StyleTransfer_V2_Results'
         file_name = Tools.get_file_name_to_save_result(directory)
         Tools.create_clear_directory(directory)
 

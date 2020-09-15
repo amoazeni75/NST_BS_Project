@@ -6,11 +6,7 @@ from __future__ import print_function, division
 # We accomplish this by balancing the content loss
 # and style loss simultaneously.
 
-import tensorflow as tf
-from Tools import load_img_and_preprocess_resize, load_img_and_preprocess_shape, VGG19_AvgPool
-from ContentReconstruction import get_content_image_features, test_content_reconstruction
-from StyleReconstruction import get_style_image_features, style_loss, test_style_reconstruction
-from Tools import LBFGS_Optimizer, scale_img
+from style_transfer_backend import Tools, ContentReconstruction, StyleReconstruction
 
 import keras.backend as K
 import numpy as np
@@ -23,24 +19,25 @@ def style_transfer(content_image_path, style_image_path):
     mydir = './Outputs/style_transfer_details'
 
     # 1: load the content and style images, then rescale the style image to the scale of content image
-    content_img = load_img_and_preprocess_resize(content_image_path, resize=512)
+    content_img = Tools.load_img_and_preprocess_resize(content_image_path, resize=512)
     h, w = content_img.shape[1:3]
 
     # test_content_reconstruction(content_img[0], mydir, [16, 17, 18, 19], 0)
 
-    style_img = load_img_and_preprocess_shape(style_image_path, (h, w))
+    style_img = Tools.load_img_and_preprocess_shape(style_image_path, (h, w))
     # show all blocks output
     # test_style_reconstruction(style_img[0], mydir, 1)
 
     batch_shape = content_img.shape
     shape = content_img.shape[1:]
 
-    vgg = VGG19_AvgPool(shape)
+    vgg = Tools.VGG19_AvgPool(shape)
     print(vgg.summary())
 
     # 2: get content and style features + features extractor model
-    content_features, content_features_extractor_model = get_content_image_features(content_img, 14, vgg)
-    style_layers_features_outputs, symbolic_conv_outputs, style_features_extractor_model = get_style_image_features(
+    content_features, content_features_extractor_model = ContentReconstruction.get_content_image_features(content_img,
+                                                                                                          14, vgg)
+    style_layers_features_outputs, symbolic_conv_outputs, style_features_extractor_model = StyleReconstruction.get_style_image_features(
         style_img, 5, vgg)
 
     # we will assume the weight of the content loss is 1
@@ -53,7 +50,7 @@ def style_transfer(content_image_path, style_image_path):
 
     for w, symbolic, actual in zip(style_weights, symbolic_conv_outputs, style_layers_features_outputs):
         # gram_matrix() expects a (H, W, C) as input
-        loss += w * style_loss(symbolic[0], actual[0])
+        loss += w * Tools.style_loss(symbolic[0], actual[0])
 
     # loss += 0.0001 * tf.image.total_variation(vgg.input)
 
@@ -72,7 +69,7 @@ def style_transfer(content_image_path, style_image_path):
         l, g = get_loss_and_grads([x_vec.reshape(*batch_shape)])
         return l.astype(np.float64), g.flatten().astype(np.float64)
 
-    final_image, losses = LBFGS_Optimizer(get_loss_and_grads_wrapper, 10, batch_shape)
+    final_image, losses = Tools.LBFGS_Optimizer(get_loss_and_grads_wrapper, 10, batch_shape)
 
     # plot loss
     plt.plot(losses)
@@ -80,7 +77,7 @@ def style_transfer(content_image_path, style_image_path):
     plt.show()
 
     # save image
-    final_image = scale_img(final_image)
+    final_image = Tools.scale_img(final_image)
     plt.imshow(final_image)
     # plt.imsave(file_name, final_image)
     plt.show()
